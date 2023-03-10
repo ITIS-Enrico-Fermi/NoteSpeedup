@@ -37,7 +37,9 @@ def main(genericMatrix: bool, elementName: str, rowsNumber: str, colsNumber: str
 	)
 
 if __name__ == "__main__":
-	parser = argparse.ArgumentParser()
+	parser = argparse.ArgumentParser(
+		description = "Command line tool for LaTeX matrix generation"
+	)
 	parser.add_argument("-g", "--generic", help="Generate generic size matrix", default=False, action="store_true")
 	parser.add_argument("-r", "--rows", help="Matrix rows number", type=str, default=None, required=True)
 	parser.add_argument("-c", "--columns", help="Matrix columns number", type=str, default=None, required=True)
