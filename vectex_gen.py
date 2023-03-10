@@ -2,44 +2,38 @@
 
 import argparse
 
-def genericSizeMatrix(elementName: str, maxRowIndex: str, maxColIndex: str) -> str:
-	matrixContent = \
-		f"a_{{11}} & a_{{12}} ... & a_{{1{maxColIndex}}} \\\\ " \
-		f"a_{{21}} & a_{{22}} ... & a_{{2{maxColIndex}}} \\\\ " \
-		"\\vdots & \\vdots & \\vdots \\\\ " \
-		f"a_{{{maxRowIndex}1}} & a_{{{maxRowIndex}2}} ... & a_{{{maxRowIndex}{maxColIndex}}} \\\\"
+def genericSizeVector(elementName: str, size: str) -> str:
+	vectorContent = f"{elementName}_{{1}} & {elementName}_{{2}} ... & {elementName}_{{{size}}} "
 
-	return matrixContent
+	return vectorContent
 
-def concreteSizeMatrix(elementName: str, rowsNumber: int, colsNumber: int) -> str:
-	matrixContent = ""
+def concreteSizeVector(elementName: str, size: int) -> str:
+	vectorContent = ""
 
-	for r in range(1, rowsNumber+1):
-		for c in range(1, colsNumber+1):
-			matrixContent += f"a_{{{r}{c}}}"
-			if c != colsNumber:
-				matrixContent += " & "
-			else:
-				matrixContent += " \\\\ " if r != rowsNumber else ""
+	for i in range(1, size+1):
+		vectorContent += f"{elementName}_{{{i}}}"
+		if i != size:
+			vectorContent += " & "
 	
-	return matrixContent
+	return vectorContent
 
-def main(genericMatrix: bool, elementName: str, rowsNumber: str, colsNumber: str):
+def main(elementName: str, size: str):
 	unformattedDelimiters = "\\begin{{pmatrix}} {} \end{{pmatrix}}"
-	matrixContent = \
-		genericSizeMatrix(elementName, rowsNumber, colsNumber) if genericMatrix \
-		else concreteSizeMatrix(elementName, int(rowsNumber), int(colsNumber))	
+	vectorContent = \
+		concreteSizeVector(elementName, int(size))	 if size.isnumeric() \
+		else genericSizeVector(elementName, size)
 
 	print(
 		unformattedDelimiters.format(
-			matrixContent
+			vectorContent
 		)
 	)
 
 if __name__ == "__main__":
-	parser = argparse.ArgumentParser()
-	parser.add_argument("-g", "--generic", help="Generate generic size vector", default=False, action="store_true")
-	parser.add_argument("-s", "--size", help="Vector size", type=str, default=None, required=True)
+	parser = argparse.ArgumentParser(
+		description = "Command line tool for LaTeX vector generation"
+	)
+	parser.add_argument("-s", "--size", help="Vector size. Can be either an integer or an index (last index of a generic size vector)", type=str, default=None, required=True)
 	parser.add_argument("-e", "--element", help="Element name", type=str, default="a", required=False)
 	args = parser.parse_args()
-	main(args.generic, args.element, args.rows, args.columns)
+	main(args.element, args.size)
