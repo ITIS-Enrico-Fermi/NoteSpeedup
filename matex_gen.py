@@ -46,3 +46,5 @@ if __name__ == "__main__":
 	parser.add_argument("-e", "--element", help="Element name", type=str, default="a", required=False)
 	args = parser.parse_args()
 	main(args.generic, args.element, args.rows, args.columns)
+
+# TODO: identity matrix, triangular (sup, inf), diagonal
