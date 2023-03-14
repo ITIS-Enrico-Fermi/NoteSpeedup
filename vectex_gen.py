@@ -8,7 +8,7 @@ class VectorDirection(Enum):
 	HORIZONTAL = "&"
 
 def genericSizeVector(elementName: str, size: str, delimiter: str) -> str:
-	vectorContent = f"{elementName}_{{1}} {delimiter} {elementName}_{{2}} ... {delimiter} {elementName}_{{{size}}} "
+	vectorContent = f"{elementName}_{{1}} {delimiter} {elementName}_{{2}} {delimiter} ... {delimiter} {elementName}_{{{size}}} "
 
 	return vectorContent
 
