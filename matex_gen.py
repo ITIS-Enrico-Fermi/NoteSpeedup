@@ -1,4 +1,4 @@
-#!/bin/python3
+ #!/bin/python3
 
 import argparse
 
@@ -6,7 +6,7 @@ def genericSizeMatrix(elementName: str, maxRowIndex: str, maxColIndex: str) -> s
 	matrixContent = \
 		f"{elementName}_{{11}} & {elementName}_{{12}} & ... & {elementName}_{{1{maxColIndex}}} \\\\ " \
 		f"{elementName}_{{21}} & {elementName}_{{22}} & ... & {elementName}_{{2{maxColIndex}}} \\\\ " \
-		"\\vdots & \\vdots & \\vdots \\\\ " \
+		"\\vdots & \\vdots & \\ddots & \\vdots \\\\ " \
 		f"{elementName}_{{{maxRowIndex}1}} & {elementName}_{{{maxRowIndex}2}} & ... & {elementName}_{{{maxRowIndex}{maxColIndex}}} \\\\"
 
 	return matrixContent
