@@ -1,6 +1,16 @@
- #!/bin/python3
+#!/usr/bin/env python3
 
 import argparse
+
+def diagoOnly(elementName: str, maxRowIndex: str, maxColIndex: str) -> str:
+	matrixContent = \
+		f"{elementName}_{{11}} & \\ & \\ & 0 \\\\ " \
+		f"\\ & {elementName}_{{22}} & \\  & \\  \\\\ " \
+		f"\\ & \\  & \\ddots  & \\  \\\\ " \
+		f"0 & \\  & \\  & {elementName}_{{{maxRowIndex}{maxColIndex}}}  \\\\ " \
+
+	return matrixContent
+
 
 def genericSizeMatrix(elementName: str, maxRowIndex: str, maxColIndex: str) -> str:
 	matrixContent = \
@@ -24,11 +34,15 @@ def concreteSizeMatrix(elementName: str, rowsNumber: int, colsNumber: int) -> st
 	
 	return matrixContent
 
-def main(genericMatrix: bool, elementName: str, rowsNumber: str, colsNumber: str):
+def main(genericMatrix: bool, elementName: str, rowsNumber: str, colsNumber: str, diagonalMatrix: bool):
 	unformattedDelimiters = "\\begin{{pmatrix}} {} \end{{pmatrix}}"
-	matrixContent = \
-		genericSizeMatrix(elementName, rowsNumber, colsNumber) if genericMatrix \
-		else concreteSizeMatrix(elementName, int(rowsNumber), int(colsNumber))	
+
+	if genericMatrix:
+		matrixContent = genericSizeMatrix(elementName, rowsNumber, colsNumber)
+	elif diagonalMatrix:
+		matrixContent = diagoOnly(elementName, rowsNumber, colsNumber)
+	else:
+		matrixContent = concreteSizeMatrix(elementName, int(rowsNumber), int(colsNumber))	
 
 	print(
 		unformattedDelimiters.format(
@@ -41,9 +55,10 @@ if __name__ == "__main__":
 		description = "Command line tool for LaTeX matrix generation"
 	)
 	parser.add_argument("-g", "--generic", help="Generate generic size matrix", default=False, action="store_true")
+	parser.add_argument("-d", "--diagonal", help="Generate generic diagonal matrix", default=False, action="store_true")
 	parser.add_argument("-r", "--rows", help="Matrix rows number", type=str, default=None, required=True)
 	parser.add_argument("-c", "--columns", help="Matrix columns number", type=str, default=None, required=True)
 	parser.add_argument("-e", "--element", help="Element name", type=str, default="a", required=False)
 	args = parser.parse_args()
-	main(args.generic, args.element, args.rows, args.columns)
+	main(args.generic, args.element, args.rows, args.columns, args.diagonal)
 
