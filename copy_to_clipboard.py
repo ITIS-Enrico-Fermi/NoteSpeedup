@@ -2,7 +2,7 @@
 
 import clipboard
 
-def main():
+def main() -> None:
     generated_latex = input()
     clipboard.copy(generated_latex)
 
