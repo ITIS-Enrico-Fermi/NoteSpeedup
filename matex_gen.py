@@ -55,11 +55,7 @@ def main(rowsNumber: str, colsNumber: str, elementName: str, generic: bool, comp
 			
 			if j == int(colsNumber): buf += ROW_SEP
 			
-		elif compact and 3 <= j <= int(colsNumber) - 1:  # If the current element is in column that has to be shrinked
-			"""
-			Omit the element except if it's 3rd column element (but not
-			a separator), in that case replace it with 3 horizontal dots
-			"""
+		elif compact and 3 <= j <= int(colsNumber) - 1:
 			buf += "\\dots & " if (j == 3 and COL_SEP not in e) else ""
 
 		else:
