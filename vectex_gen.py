@@ -4,8 +4,8 @@ import argparse
 from enum import Enum
 
 class VectorDirection(Enum):
-	VERTICAL = "\\\\"
-	HORIZONTAL = "&"
+	column = "\\\\"
+	row = "&"
 
 def genericSizeVector(elementName: str, size: str, delimiter: str) -> str:
 	vectorContent = f"{elementName}_{{1}} {delimiter} {elementName}_{{2}} {delimiter} ... {delimiter} {elementName}_{{{size}}} "
@@ -22,13 +22,29 @@ def concreteSizeVector(elementName: str, size: int, delimiter: str) -> str:
 	
 	return vectorContent
 
-def main(elementName: str, size: str, direction: VectorDirection):
+def canonicalVector(elementName: str, size: int, delimiter: str, canonicalPos: int) -> str:
+	vectorContent = ""
+
+	for i in range(1, size+1):
+		vectorContent += "0" if i != canonicalPos else "1"
+
+		if i != size:
+			vectorContent += f" {delimiter} "
+	
+	return vectorContent
+
+def main(elementName: str, size: str, canonicalPos: int, direction: VectorDirection):
 	unformattedDelimiters = "\\begin{{pmatrix}} {} \end{{pmatrix}}"
 	
-	vectorContent = \
-		concreteSizeVector(elementName, int(size), direction.value)	 if size.isnumeric() \
-		else genericSizeVector(elementName, size, direction.value)
-	
+	if size.isnumeric() and not canonicalPos:
+		vectorContent = concreteSizeVector(elementName, int(size), direction.value)
+	elif size.isnumeric() and canonicalPos:
+		vectorContent = canonicalVector(elementName, int(size), direction.value, canonicalPos)
+	elif not size.isnumeric() and not canonicalPos:
+		vectorContent = genericSizeVector(elementName, size, direction.value)
+	else:
+		raise ValueError("Invalid options configuration")
+
 	print(
 		unformattedDelimiters.format(
 			vectorContent
@@ -39,10 +55,14 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser(
 		description = "Command line tool for LaTeX vector generation"
 	)
-	parser.add_argument("-s", "--size", help="Vector size. Can be either an integer or an index (last index of a generic size vector)", type=str, default=None, required=True)
-	parser.add_argument("-e", "--element", help="Element name", type=str, default="a", required=False)
-	selectDirection = parser.add_mutually_exclusive_group(required=True)
-	selectDirection.add_argument("--vertical", help="Generate a vertical vector", action="store_true")
-	selectDirection.add_argument("--horizontal", help="Generate an horizontal vector", action="store_true")
+
+	parser.add_argument("-l", "--length", help="Vector length. Can be either an integer or an index (last index of a generic size vector)", type=str, default=None, required=True)
+	parser.add_argument("-s", "--symbol", help="Specify a generic element name or symbol, usually a letter", type=str, default="c", required=False)
+	parser.add_argument("-e", "--canonical-vector", help="Generate canonical vector with 1 in the specified position. Eg: e2 = (0 1 0 ... 0)", type=int, required=False)
+
+	selectDirection = parser.add_subparsers(title="directions", dest="direction", help="Define vector direction", required=True)
+	selectDirection.add_parser("column", help="Generate a vertical vector")
+	selectDirection.add_parser("row", help="Generate an horizontal vector")
+
 	args = parser.parse_args()
-	main(args.element, args.size, VectorDirection.VERTICAL if args.vertical else VectorDirection.HORIZONTAL)
+	main(args.symbol, args.length, args.canonical_vector, VectorDirection[args.direction])
