@@ -1,54 +1,73 @@
 #!/usr/bin/env python3
 
 import argparse
+from math import floor
+from enum import Enum
 
-def diagoOnly(elementName: str, maxRowIndex: str, maxColIndex: str) -> str:
-	matrixContent = \
-		f"{elementName}_{{11}} & \\ & \\ & 0 \\\\ " \
-		f"\\ & {elementName}_{{22}} & \\  & \\  \\\\ " \
-		f"\\ & \\  & \\ddots  & \\  \\\\ " \
-		f"0 & \\  & \\  & {elementName}_{{{maxRowIndex}{maxColIndex}}}  \\\\ " \
+COL_SEP = "&"
+ROW_SEP = "\\\\"
 
-	return matrixContent
+class MatrixShape(Enum):
+	full, eye, diag, triu, tril = range(5)
 
-
-def genericSizeMatrix(elementName: str, maxRowIndex: str, maxColIndex: str) -> str:
-	matrixContent = \
-		f"{elementName}_{{11}} & {elementName}_{{12}} & \dots & {elementName}_{{1{maxColIndex}}} \\\\ " \
-		f"{elementName}_{{21}} & {elementName}_{{22}} & \dots & {elementName}_{{2{maxColIndex}}} \\\\ " \
-		"\\vdots & \\vdots & \\ddots & \\vdots \\\\ " \
-		f"{elementName}_{{{maxRowIndex}1}} & {elementName}_{{{maxRowIndex}2}} & \dots & {elementName}_{{{maxRowIndex}{maxColIndex}}} \\\\"
-
-	return matrixContent
-
-def concreteSizeMatrix(elementName: str, rowsNumber: int, colsNumber: int) -> str:
-	matrixContent = ""
-
-	for r in range(1, rowsNumber+1):
-		for c in range(1, colsNumber+1):
-			matrixContent += f"{elementName}_{{{r}{c}}}"
-			if c != colsNumber:
-				matrixContent += " & "
-			else:
-				matrixContent += " \\\\ " if r != rowsNumber else ""
+	def fullMatrixElement(self, i: int, j: int, e: str, generic: bool) -> str:
+		return f"{e}_{{{i}{j}}}"
 	
-	return matrixContent
+	def eyeMatrixElement(self, i: int, j: int, e: str) -> str:
+		return "1" if (i == j) else "0"
+	
+	def diagMatrixElement(self, i: int, j: int, e: str, generic: bool) -> str:
+		return f"{e}_{{{i}{j}}}" if (i == j) else "0"
 
-def main(genericMatrix: bool, elementName: str, rowsNumber: str, colsNumber: str, diagonalMatrix: bool):
-	unformattedDelimiters = "\\begin{{pmatrix}} {} \end{{pmatrix}}"
+	def triuMatrixElement(self, i: int, j: int, e: str, generic: bool) -> str:
+		return f"{e}_{{{i}{j}}}" if (i >= j) else "0"
+	
+	def trilMatrixElement(self, i: int, j: int, e: str, generic: bool) -> str:
+		return f"{e}_{{{i}{j}}}" if (i <= j) else "0"
 
-	if genericMatrix:
-		matrixContent = genericSizeMatrix(elementName, rowsNumber, colsNumber)
-	elif diagonalMatrix:
-		matrixContent = diagoOnly(elementName, rowsNumber, colsNumber)
-	else:
-		matrixContent = concreteSizeMatrix(elementName, int(rowsNumber), int(colsNumber))	
+	def getElements(self, rows: int, cols: int, element: str, generic: bool) -> (int, int, str):
+		for i in range(1, rows+1):
+			for j in range(1, cols+1):
+				if (self == MatrixShape.full):
+					yield i, j, self.fullMatrixElement(i, j, element, generic)
+				elif (self == MatrixShape.eye):
+					yield i, j, self.eyeMatrixElement(i, j, element)
+				elif (self == MatrixShape.diag):
+					yield i, j, self.diagMatrixElement(i, j, element, generic)
+				elif (self == MatrixShape.triu):
+					yield i, j, self.triuMatrixElement(i, j, element, generic)
+				elif (self == MatrixShape.tril):
+					yield i, j, self.trilMatrixElement(i, j, element, generic)
 
-	print(
-		unformattedDelimiters.format(
-			matrixContent
-		)
-	)
+				yield i, j, f" {COL_SEP} " if (j != cols) else " "
+
+			yield i, j, f"{ROW_SEP} " if (i != rows) else ""
+
+def main(rowsNumber: str, colsNumber: str, elementName: str, generic: bool, compact: bool, shape: MatrixShape):
+	buf = "\\begin{pmatrix} "
+
+	for i, j, e in shape.getElements(int(rowsNumber), int(colsNumber), elementName, generic):
+		if compact and 3 <= i <= int(rowsNumber) - 1:
+			if i != 3 or any(s in e for s in [ROW_SEP, COL_SEP, " "]): continue
+
+			if j in [1, 2, int(colsNumber)]: buf += "\\vdots & "
+			elif j == 3: buf += "\\ddots & "
+			
+			if j == int(colsNumber): buf += ROW_SEP
+			
+		elif compact and 3 <= j <= int(colsNumber) - 1:  # If the current element is in column that has to be shrinked
+			"""
+			Omit the element except if it's 3rd column element (but not
+			a separator), in that case replace it with 3 horizontal dots
+			"""
+			buf += "\\dots & " if (j == 3 and COL_SEP not in e) else ""
+
+		else:
+			buf += e
+
+	buf += "\\end{pmatrix}"
+
+	print(buf)
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(
@@ -68,7 +87,7 @@ if __name__ == "__main__":
 	parser.add_argument("-r", "--rows", help="Matrix rows number. Can be a letter.", type=str, default=None, required=True)
 	parser.add_argument("-c", "--columns", help="Matrix columns number. Can be a letter.", type=str, default=None, required=True)
 	
-	matrixShapeSubparser = parser.add_subparsers(help="Define matrix shape", required=True)
+	matrixShapeSubparser = parser.add_subparsers(title="shapes", dest="shape", help="Define matrix shape", required=True)
 	matrixShapeFull = matrixShapeSubparser.add_parser("full", help="Generate full (complete) matrix")
 	matrixShapeEye = matrixShapeSubparser.add_parser("eye", help="Generate identity matrix")
 	matrixShapeDiag = matrixShapeSubparser.add_parser("diag", help="Generate diagonal matrix")
@@ -76,4 +95,4 @@ if __name__ == "__main__":
 	matrixShapeTril = matrixShapeSubparser.add_parser("tril", help="Generate lower triangular matrix")	
 
 	args = parser.parse_args()
-	# main(args.generic, args.element, args.rows, args.columns, args.diagonal)
+	main(args.rows, args.columns, args.symbol, args.generic, args.compact, MatrixShape[args.shape])
