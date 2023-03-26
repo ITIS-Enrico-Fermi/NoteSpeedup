@@ -30,7 +30,7 @@ class MatrixShape(Enum):
 
 		return f"{self.element}_{{{rowIdx}{colIdx}}}" if self.generic else str(self.counter)
 	
-	def eyeMatrixElement(self, i: int, j: int, e: str) -> str:
+	def eyeMatrixElement(self, i: int, j: int) -> str:
 		return "1" if i == j else "0"
 	
 	def diagMatrixElement(self, i: int, j: int) -> str:
@@ -42,12 +42,15 @@ class MatrixShape(Enum):
 		return f"{self.element}_{{{rowIdx}{colIdx}}}" if self.generic else str(self.counter)
 
 	def triuMatrixElement(self, i: int, j: int) -> str:
-		if i >= j: return "0"
+		if i > j: return "0"
+
+		rowIdx: str = self.lastRow if (self.lastRow and i == self.rows) else str(i)
+		colIdx: str = self.lastCol if (self.lastCol and j == self.cols) else str(j)
 
 		return f"{self.element}_{{{rowIdx}{colIdx}}}" if self.generic else str(self.counter)
 	
 	def trilMatrixElement(self, i: int, j: int) -> str:
-		if i <= j: return "0"
+		if i < j: return "0"
 
 		rowIdx: str = self.lastRow if (self.lastRow and i == self.rows) else str(i)
 		colIdx: str = self.lastCol if (self.lastCol and j == self.cols) else str(j)
@@ -138,11 +141,11 @@ if __name__ == "__main__":
 	parser.add_argument("-c", "--columns", help="Matrix columns number. Can be a letter.", type=str, default=None, required=True)
 	
 	matrixShapeSubparser = parser.add_subparsers(title="shapes", dest="shape", help="Define matrix shape", required=True)
-	matrixShapeFull = matrixShapeSubparser.add_parser("full", help="Generate full (complete) matrix")
-	matrixShapeEye = matrixShapeSubparser.add_parser("eye", help="Generate identity matrix")
-	matrixShapeDiag = matrixShapeSubparser.add_parser("diag", help="Generate diagonal matrix")
-	matrixShapeTriu = matrixShapeSubparser.add_parser("triu", help="Generate upper triangular matrix")
-	matrixShapeTril = matrixShapeSubparser.add_parser("tril", help="Generate lower triangular matrix")	
+	matrixShapeSubparser.add_parser("full", help="Generate full (complete) matrix")
+	matrixShapeSubparser.add_parser("eye", help="Generate identity matrix")
+	matrixShapeSubparser.add_parser("diag", help="Generate diagonal matrix")
+	matrixShapeSubparser.add_parser("triu", help="Generate upper triangular matrix")
+	matrixShapeSubparser.add_parser("tril", help="Generate lower triangular matrix")	
 
 	args = parser.parse_args()
 	main(args.rows, args.columns, args.symbol, args.generic, args.compact_rows, args.compact_cols, MatrixShape[args.shape])
