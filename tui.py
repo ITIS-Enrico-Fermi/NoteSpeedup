@@ -1,52 +1,33 @@
 #!/usr/bin/env python3
 
-import curses
-import operator
-from curses.textpad import Textbox, rectangle
+import urwid
+from typing import *
 
 
-def main(win: curses.window) -> None:
-  WIN_MIDPOINT = (
-    int(curses.COLS / 2),
-    int(curses.LINES / 2)
-  )
-  MATRIX_SIZE = (
-    5,
-    5
-  )
-  MATRIX_MIDPOINT = tuple(
-    map(
-      operator.floordiv,
-      MATRIX_SIZE,
-      (2, 2)
-    )
-  )
+def onExitClick(button: urwid.Button) -> NoReturn:
+  raise urwid.ExitMainLoop()
 
-  RECTANGLE_UL = tuple(
-    map(
-      operator.sub,
-      WIN_MIDPOINT,
-      MATRIX_MIDPOINT
-    )
-  )
+def onGenerateClick(res: urwid.Text, button: urwid.Button) -> NoReturn:
+  res.set_text("test")
+  raise urwid.ExitMainLoop()
 
-  RECTANGLE_BR = tuple(
-    map(
-      operator.add,
-      RECTANGLE_UL,
-      MATRIX_SIZE
-    )
-  )
+def main() -> None:
+  resTxt = urwid.Text(u"")
+  headerTxt = urwid.Text(u"Fill the matrix with coefficients or scalars by moving with arrow keys.\nClick on GENERATE to quit this interactive screen and print the result on stdout.")
 
-  win.clear()
-  win.leaveok(True)
-  rectangle(win, RECTANGLE_UL[1], RECTANGLE_UL[0], RECTANGLE_BR[1], RECTANGLE_BR[0])
+  exitButton = urwid.Button(u"EXIT")
+  urwid.connect_signal(exitButton, "click", onExitClick)
+  
+  generateButton = urwid.Button(u"GENERATE")
+  urwid.connect_signal(generateButton, "click", onGenerateClick, user_args=[resTxt])
 
-  box = Textbox(win)
-  box.edit(lambda key: key if chr(key).isnumeric() or chr(key).isalpha() else None)
-  print(box.gather())
+  buttonsList = urwid.Columns([exitButton, generateButton])
 
-  # win.getkey()
+  filler = urwid.Filler(headerTxt, "top")
+  frame = urwid.Frame(filler, header=headerTxt, footer=buttonsList, focus_part="footer")
+  
+  urwid.MainLoop(frame).run()
+  print(resTxt.get_text()[0])
 
 if __name__ == "__main__":
-  curses.wrapper(main)  # Creates stdscr, turns on cbreak, turns off echo, enables terminal keypad
+  main()
