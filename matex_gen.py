@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 
 import argparse
+import tui
 from math import ceil
 from enum import Enum
+from typing import *
 
 COL_SEP = "&"
 ROW_SEP = "\\\\"
 
 class MatrixShape(Enum):
-	full, eye, diag, triu, tril = range(5)
+	full, eye, diag, triu, tril, custom = range(6)
 
 	def __new__(cls, value):
 		obj = object.__new__(cls)
@@ -23,6 +25,9 @@ class MatrixShape(Enum):
 		obj.lastCol = ""
 
 		return obj
+
+	def setCustomElementsList(self, elementsList: List[str]) -> None:
+		self.customElementsList = elementsList
 
 	def fullMatrixElement(self, i: int, j: int) -> str:
 		rowIdx: str = self.lastRow if (self.lastRow and i == self.rows) else str(i)
@@ -57,6 +62,9 @@ class MatrixShape(Enum):
 
 		return f"{self.element}_{{{rowIdx}{colIdx}}}" if self.generic else str(self.counter)
 
+	def customMatrixElement(self, i: int, j: int) -> str:
+		return self.customElementsList[(i-1) * self.cols + (j-1)]
+
 	def getElements(self, rows: int, cols: int, lastRow: str, lastCol: str, element: str, generic: bool) -> (int, int, str):
 		self.rows = rows
 		self.cols = cols
@@ -79,6 +87,8 @@ class MatrixShape(Enum):
 					yield i, j, self.triuMatrixElement(i, j)
 				elif self == MatrixShape.tril:
 					yield i, j, self.trilMatrixElement(i, j)
+				elif self == MatrixShape.custom:
+					yield i, j, self.customMatrixElement(i, j)
 
 				yield i, j, f" {COL_SEP} " if j != cols else " "
 
@@ -103,6 +113,12 @@ def main(rowsNumber: str, colsNumber: str, elementName: str, generic: bool, comp
 		lastRowSymbol = rowsNumber
 		rowsNumber = 4
 		compactRows = True
+	
+	if shape == MatrixShape.custom:
+		if not compactRows and not compactCols:
+			shape.setCustomElementsList(tui.startInteractiveScreen(rowsNumber, colsNumber))
+		else:
+			raise ValueError("Unknown matrix dimensions")
 
 	for i, j, e in shape.getElements(rowsNumber, colsNumber, lastRowSymbol, lastColSymbol, elementName, generic):
 		if compactRows and 3 <= i <= rowsNumber - 1:
@@ -146,6 +162,7 @@ if __name__ == "__main__":
 	matrixShapeSubparser.add_parser("diag", help="Generate diagonal matrix")
 	matrixShapeSubparser.add_parser("triu", help="Generate upper triangular matrix")
 	matrixShapeSubparser.add_parser("tril", help="Generate lower triangular matrix")	
+	matrixShapeSubparser.add_parser("custom", help="Interactive screen to fill in the matrix your own way")	
 
 	args = parser.parse_args()
 	main(args.rows, args.columns, args.symbol, args.generic, args.compact_rows, args.compact_cols, MatrixShape[args.shape])

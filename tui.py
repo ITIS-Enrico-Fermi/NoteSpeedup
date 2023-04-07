@@ -26,7 +26,7 @@ class Grid(urwid.Pile):
   
   
   def get_text(self, r: int, c: int) -> str:
-    return self.cellsEditor[r*self.__cols+c].get_text()
+    return self.cellsEditor[r * self.__cols + c].get_text()
 
 class FocusManager:
   def __init__(self, frame: urwid.Frame):
@@ -50,8 +50,12 @@ def onGenerateClick(button: urwid.Button) -> NoReturn:
   GENERATE = True
   raise urwid.ExitMainLoop()
 
-def main() -> None:
-  headerTxt = urwid.Text(u"Fill the matrix with coefficients or scalars by moving with arrow keys.\nClick on GENERATE to quit this interactive screen and print the result on stdout.")
+def startInteractiveScreen(rows: int, cols: int) -> None:
+  headerTxt = urwid.Text(
+    u"Fill the matrix with coefficients or scalars by moving with arrow keys.\n"
+    "Click on GENERATE to quit this interactive screen and print the result on stdout.\n"
+    "Use TAB to change focus."
+  )
 
   exitButton = urwid.Button(u"EXIT")
   urwid.connect_signal(exitButton, "click", onExitClick)
@@ -67,16 +71,16 @@ def main() -> None:
     (12, generateButton)
   ])
 
-  grid = Grid(3, 4)
+  grid = Grid(rows, cols)
   frame = urwid.Frame(urwid.Filler(grid), header=headerTxt, footer=buttonsList, focus_part="body")
 
   focusManager = FocusManager(frame)
   urwid.MainLoop(frame, unhandled_input = focusManager).run()
 
   if GENERATE:
-    print(" ".join([
+    return [
       editor.get_text()[0] if editor.get_text()[0] != "" else "0" for editor in grid.cellsEditor
-    ]))
+    ]
 
 if __name__ == "__main__":
-  main()
+  print(startInteractiveScreen(3, 4))
