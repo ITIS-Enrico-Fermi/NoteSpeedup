@@ -75,7 +75,7 @@ def main() -> None:
 
   if GENERATE:
     print(" ".join([
-      editor.get_text()[0] for editor in grid.cellsEditor
+      editor.get_text()[0] if editor.get_text()[0] != "" else "0" for editor in grid.cellsEditor
     ]))
 
 if __name__ == "__main__":
