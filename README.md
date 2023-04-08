@@ -13,5 +13,5 @@ Now you can go faster than ever with matrix and vector generator, quickly access
 Not convinced yet?
 
 Look at this beautiful terminal UI (TUI) for custom matrices generation:
-![tui][tui_img.png]
+![tui](tui_img.png)
 
