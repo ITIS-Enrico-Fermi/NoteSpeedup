@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import argparse
-import tui
 from math import ceil
 from enum import Enum
 from typing import *
@@ -116,6 +115,7 @@ def main(rowsNumber: str, colsNumber: str, elementName: str, generic: bool, comp
 	
 	if shape == MatrixShape.custom:
 		if not compactRows and not compactCols:
+			import tui
 			shape.setCustomElementsList(tui.startInteractiveScreen(rowsNumber, colsNumber))
 		else:
 			raise ValueError("Unknown matrix dimensions")
