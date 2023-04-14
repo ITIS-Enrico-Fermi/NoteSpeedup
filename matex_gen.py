@@ -5,8 +5,11 @@ from math import ceil
 from enum import Enum
 from typing import *
 
-COL_SEP = "&"
+COL_SEP = " & "
 ROW_SEP = "\\\\"
+
+COMPACT_ROWS_NUMBER = 4		# < number of rows when using compact rows -cr
+COMPACT_COLUMNS_NUMBER = 4	# < number of columns when using compact column -cc
 
 class MatrixShape(Enum):
 	full, eye, diag, triu, tril, custom = range(6)
@@ -14,10 +17,10 @@ class MatrixShape(Enum):
 class Matrix():
 
 	def __init__(self, rows: int, cols: int, lastRow: str, lastCol: str, element: str, generic: bool, shape: MatrixShape):
-		self.rows = rows
-		self.cols = cols
-		self.lastRow = lastRow
-		self.lastCol = lastCol
+		self.rowsNumber = rows
+		self.colsNumber = cols
+		self.lastRow = lastRow	# < symbol of the last row if row dimension is generic (for example m), empty string otherwise
+		self.lastCol = lastCol	# < symbol of the last column if column dimension is generic (for example n), empty string otherwise
 		self.element = element
 		self.generic = generic
 		self.shape = shape
@@ -26,10 +29,10 @@ class Matrix():
 		self.customElementsList = elementsList
 
 	def fullMatrixElement(self, i: int, j: int) -> str:
-		rowIdx: str = self.lastRow if (self.lastRow and i == self.rows) else str(i)
-		colIdx: str = self.lastCol if (self.lastCol and j == self.cols) else str(j)
+		rowIdx: str = self.lastRow if (self.lastRow and i == self.rowsNumber) else str(i)
+		colIdx: str = self.lastCol if (self.lastCol and j == self.colsNumber) else str(j)
 
-		return f"{self.element}_{{{rowIdx}{colIdx}}}" if self.generic else str(self.counter)
+		return f"{self.element}_{{{rowIdx}{colIdx}}}" if self.generic else str(i*j)
 	
 	def eyeMatrixElement(self, i: int, j: int) -> str:
 		return "1" if i == j else "0"
@@ -37,55 +40,69 @@ class Matrix():
 	def diagMatrixElement(self, i: int, j: int) -> str:
 		if i != j: return "0"
 
-		rowIdx: str = self.lastRow if (self.lastRow and i == self.rows) else str(i)
-		colIdx: str = self.lastCol if (self.lastCol and j == self.cols) else str(j)
+		rowIdx: str = self.lastRow if (self.lastRow and i == self.rowsNumber) else str(i)
+		colIdx: str = self.lastCol if (self.lastCol and j == self.colsNumber) else str(j)
 
-		return f"{self.element}_{{{rowIdx}{colIdx}}}" if self.generic else str(self.counter)
+		return f"{self.element}_{{{rowIdx}{colIdx}}}" if self.generic else str(i*j)
 
 	def triuMatrixElement(self, i: int, j: int) -> str:
 		if i > j: return "0"
 
-		rowIdx: str = self.lastRow if (self.lastRow and i == self.rows) else str(i)
-		colIdx: str = self.lastCol if (self.lastCol and j == self.cols) else str(j)
+		rowIdx: str = self.lastRow if (self.lastRow and i == self.rowsNumber) else str(i)
+		colIdx: str = self.lastCol if (self.lastCol and j == self.colsNumber) else str(j)
 
-		return f"{self.element}_{{{rowIdx}{colIdx}}}" if self.generic else str(self.counter)
+		return f"{self.element}_{{{rowIdx}{colIdx}}}" if self.generic else str(i*j)
 	
 	def trilMatrixElement(self, i: int, j: int) -> str:
 		if i < j: return "0"
 
-		rowIdx: str = self.lastRow if (self.lastRow and i == self.rows) else str(i)
-		colIdx: str = self.lastCol if (self.lastCol and j == self.cols) else str(j)
+		rowIdx: str = self.lastRow if (self.lastRow and i == self.rowsNumber) else str(i)
+		colIdx: str = self.lastCol if (self.lastCol and j == self.colsNumber) else str(j)
 
-		return f"{self.element}_{{{rowIdx}{colIdx}}}" if self.generic else str(self.counter)
+		return f"{self.element}_{{{rowIdx}{colIdx}}}" if self.generic else str(i*j)
 
 	def customMatrixElement(self, i: int, j: int) -> str:
-		return self.customElementsList[(i-1) * self.cols + (j-1)]
+		return self.customElementsList[(i-1) * self.colsNumber + (j-1)]
 
-	def elements(self) -> (int, int, str):
-		for i in range(1, rows+1):
-			for j in range(1, cols+1):
-				self.counter += 1
-				
-				if self == MatrixShape.full:
-					yield i, j, self.fullMatrixElement(i, j)
-				elif self == MatrixShape.eye:
-					yield i, j, self.eyeMatrixElement(i, j)
-				elif self == MatrixShape.diag:
-					yield i, j, self.diagMatrixElement(i, j)
-				elif self == MatrixShape.triu:
-					yield i, j, self.triuMatrixElement(i, j)
-				elif self == MatrixShape.tril:
-					yield i, j, self.trilMatrixElement(i, j)
-				elif self == MatrixShape.custom:
-					yield i, j, self.customMatrixElement(i, j)
+	def elementAt(self, row: int, col: int) -> str:
+		if self.shape == MatrixShape.full:
+			return self.fullMatrixElement(row, col)
+		elif self.shape == MatrixShape.eye:
+			return self.eyeMatrixElement(row, col)
+		elif self.shape == MatrixShape.diag:
+			return self.diagMatrixElement(row, col)
+		elif self.shape == MatrixShape.triu:
+			return self.triuMatrixElement(row, col)
+		elif self.shape == MatrixShape.tril:
+			return self.trilMatrixElement(row, col)
+		elif self.shape == MatrixShape.custom:
+			return self.customMatrixElement(row, col)
+		
+	def rows(self, compactRows: bool, compactCols: bool):
+		"""
+		Generates the rows and provides an iterator.
+		"""
 
-				yield i, j, f" {COL_SEP} " if j != cols else " "
+		for i in range(1, self.rowsNumber + 1):
+			row = list()
+			collapsedRow = False
 
-			yield i, j, f"{ROW_SEP} " if i != rows else ""
+			if compactRows and i == COMPACT_COLUMNS_NUMBER - 1:
+				collapsedRow = True
+
+			if not compactRows or compactRows and not COMPACT_COLUMNS_NUMBER <= i < self.rowsNumber:
+				for j in range(1, self.colsNumber + 1):
+					if compactCols and COMPACT_COLUMNS_NUMBER - 1 <= j < self.colsNumber:
+						if j == COMPACT_COLUMNS_NUMBER - 1:
+							row.append("\\dots" if not collapsedRow else "\\ddots")
+
+					else:
+						row.append(self.elementAt(i, j) if not collapsedRow else "\\vdots")
+
+			yield row
+			
 
 def main(rowsNumber: str, colsNumber: str, elementName: str, generic: bool, compactRows: bool, compactCols: bool, shape: MatrixShape):
-	buf = "\\begin{pmatrix} "
-
 	lastRowSymbol = ""
 	lastColSymbol = ""
 
@@ -93,14 +110,14 @@ def main(rowsNumber: str, colsNumber: str, elementName: str, generic: bool, comp
 		colsNumber = int(colsNumber)
 	else:
 		lastColSymbol = colsNumber
-		colsNumber = 4
+		colsNumber = COMPACT_COLUMNS_NUMBER
 		compactCols = True
 
 	if rowsNumber.isnumeric():
 		rowsNumber = int(rowsNumber)
 	else:
 		lastRowSymbol = rowsNumber
-		rowsNumber = 4
+		rowsNumber = COMPACT_ROWS_NUMBER
 		compactRows = True
 	
 	if shape == MatrixShape.custom:
@@ -110,26 +127,17 @@ def main(rowsNumber: str, colsNumber: str, elementName: str, generic: bool, comp
 		else:
 			raise ValueError("Unknown matrix dimensions")
 
-	matrix = Matrix(rowsNumber, colsNumber, lastRow, lastCol, element, generic, shape)
+	matrix = Matrix(rowsNumber, colsNumber, lastRowSymbol, lastColSymbol, elementName, generic, shape)
+	
+	buf = "\\begin{pmatrix} "
 
-	for i, j, e in matrix.elements():
-		if compactRows and 3 <= i <= rowsNumber - 1:
-			if i != 3 or any(s in e for s in [ROW_SEP, COL_SEP, " "]): continue
-
-			if j == 3 and compactCols: buf += "\\ddots & "
-			elif not compactCols or j in [1, 2, colsNumber]: buf += "\\vdots & "
-			
-			if j == colsNumber: buf += ROW_SEP
-			
-		elif compactCols and 3 <= j <= colsNumber - 1:
-			buf += "\\dots & " if (j == 3 and COL_SEP not in e) else ""
-
-		else:
-			buf += e
-
-	buf += "\\end{pmatrix}"
+	for row in matrix.rows(compactRows, compactCols):
+		buf += COL_SEP.join(row) + ROW_SEP
+	
+	buf += " \\end{pmatrix}"
 
 	print(buf)
+
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(
