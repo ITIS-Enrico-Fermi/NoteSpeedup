@@ -11,72 +11,23 @@ ROW_SEP = "\\\\"
 COMPACT_ROWS_NUMBER = 4		# < number of rows when using compact rows -cr
 COMPACT_COLUMNS_NUMBER = 4	# < number of columns when using compact column -cc
 
-class MatrixShape(Enum):
-	full, eye, diag, triu, tril, custom = range(6)
 
 class Matrix():
 
-	def __init__(self, rows: int, cols: int, lastRow: str, lastCol: str, element: str, generic: bool, shape: MatrixShape):
+	def __init__(self, rows: int, cols: int, lastRow: str, lastCol: str, element: str, generic: bool):
 		self.rowsNumber = rows
 		self.colsNumber = cols
 		self.lastRow = lastRow	# < symbol of the last row if row dimension is generic (for example m), empty string otherwise
 		self.lastCol = lastCol	# < symbol of the last column if column dimension is generic (for example n), empty string otherwise
 		self.element = element
 		self.generic = generic
-		self.shape = shape
 
-	def setCustomElementsList(self, elementsList: List[str]) -> None:
-		self.customElementsList = elementsList
-
-	def fullMatrixElement(self, i: int, j: int) -> str:
-		rowIdx: str = self.lastRow if (self.lastRow and i == self.rowsNumber) else str(i)
-		colIdx: str = self.lastCol if (self.lastCol and j == self.colsNumber) else str(j)
-
-		return f"{self.element}_{{{rowIdx}{colIdx}}}" if self.generic else str(i*j)
-	
-	def eyeMatrixElement(self, i: int, j: int) -> str:
-		return "1" if i == j else "0"
-	
-	def diagMatrixElement(self, i: int, j: int) -> str:
-		if i != j: return "0"
-
-		rowIdx: str = self.lastRow if (self.lastRow and i == self.rowsNumber) else str(i)
-		colIdx: str = self.lastCol if (self.lastCol and j == self.colsNumber) else str(j)
-
-		return f"{self.element}_{{{rowIdx}{colIdx}}}" if self.generic else str(i*j)
-
-	def triuMatrixElement(self, i: int, j: int) -> str:
-		if i > j: return "0"
-
-		rowIdx: str = self.lastRow if (self.lastRow and i == self.rowsNumber) else str(i)
-		colIdx: str = self.lastCol if (self.lastCol and j == self.colsNumber) else str(j)
-
-		return f"{self.element}_{{{rowIdx}{colIdx}}}" if self.generic else str(i*j)
-	
-	def trilMatrixElement(self, i: int, j: int) -> str:
-		if i < j: return "0"
-
-		rowIdx: str = self.lastRow if (self.lastRow and i == self.rowsNumber) else str(i)
-		colIdx: str = self.lastCol if (self.lastCol and j == self.colsNumber) else str(j)
-
-		return f"{self.element}_{{{rowIdx}{colIdx}}}" if self.generic else str(i*j)
-
-	def customMatrixElement(self, i: int, j: int) -> str:
-		return self.customElementsList[(i-1) * self.colsNumber + (j-1)]
-
-	def elementAt(self, row: int, col: int) -> str:
-		if self.shape == MatrixShape.full:
-			return self.fullMatrixElement(row, col)
-		elif self.shape == MatrixShape.eye:
-			return self.eyeMatrixElement(row, col)
-		elif self.shape == MatrixShape.diag:
-			return self.diagMatrixElement(row, col)
-		elif self.shape == MatrixShape.triu:
-			return self.triuMatrixElement(row, col)
-		elif self.shape == MatrixShape.tril:
-			return self.trilMatrixElement(row, col)
-		elif self.shape == MatrixShape.custom:
-			return self.customMatrixElement(row, col)
+	def elementAt(self, i: int, j: int) -> str:
+		"""
+		This method is called by self.rows to retrieve a matrix element at the given indexes.
+		A subclass must override this.
+		"""
+		return ""
 		
 	def rows(self, compactRows: bool, compactCols: bool):
 		"""
@@ -100,7 +51,70 @@ class Matrix():
 						row.append(self.elementAt(i, j) if not collapsedRow else "\\vdots")
 
 			yield row
-			
+
+class FullMatrix(Matrix):
+	def elementAt(self, i: int, j: int) -> str:
+		rowIdx: str = self.lastRow if (self.lastRow and i == self.rowsNumber) else str(i)
+		colIdx: str = self.lastCol if (self.lastCol and j == self.colsNumber) else str(j)
+
+		return f"{self.element}_{{{rowIdx}{colIdx}}}" if self.generic else str(i*j)
+	
+class EyeMatrix(Matrix):
+	def elementAt(self, i: int, j: int) -> str:
+		return "1" if i == j else "0"
+
+class DiagMatrix(Matrix):
+	def elementAt(self, i: int, j: int) -> str:
+		if i != j: return "0"
+
+		rowIdx: str = self.lastRow if (self.lastRow and i == self.rowsNumber) else str(i)
+		colIdx: str = self.lastCol if (self.lastCol and j == self.colsNumber) else str(j)
+
+		return f"{self.element}_{{{rowIdx}{colIdx}}}" if self.generic else str(i*j)
+
+class TriuMatrix(Matrix):
+	def elementAt(self, i: int, j: int) -> str:
+		if i > j: return "0"
+
+		rowIdx: str = self.lastRow if (self.lastRow and i == self.rowsNumber) else str(i)
+		colIdx: str = self.lastCol if (self.lastCol and j == self.colsNumber) else str(j)
+
+		return f"{self.element}_{{{rowIdx}{colIdx}}}" if self.generic else str(i*j)
+
+class TrilMatrix(Matrix):
+	def elementAt(self, i: int, j: int) -> str:
+		if i < j: return "0"
+
+		rowIdx: str = self.lastRow if (self.lastRow and i == self.rowsNumber) else str(i)
+		colIdx: str = self.lastCol if (self.lastCol and j == self.colsNumber) else str(j)
+
+		return f"{self.element}_{{{rowIdx}{colIdx}}}" if self.generic else str(i*j)
+	
+class CustomMatrix(Matrix):
+	elements = list()
+
+	def elementAt(self, i: int, j: int) -> str:
+		return self.elements[(i-1) * self.colsNumber + (j-1)]
+	
+	def setCustomElementsList(self, elements):
+		self.elements = elements
+
+
+class MatrixShape(Enum):
+	"""
+	This enum maps each shaped-matrix class with its short name.
+	For example a triangular upper matrix is called "triu" for short. By accessing the enum
+	with its dictionary interface (MatrixShape["triu"]) you can retrieve the corresponding class
+	that when istantiated will provide the proper elementAt method.
+	To istantiate the class from the enum value, use the .value property.
+	"""
+	full = FullMatrix
+	eye = EyeMatrix
+	diag = DiagMatrix
+	triu = TriuMatrix
+	tril = TrilMatrix
+	custom = CustomMatrix
+
 
 def main(rowsNumber: str, colsNumber: str, elementName: str, generic: bool, compactRows: bool, compactCols: bool, shape: MatrixShape):
 	lastRowSymbol = ""
@@ -119,16 +133,17 @@ def main(rowsNumber: str, colsNumber: str, elementName: str, generic: bool, comp
 		lastRowSymbol = rowsNumber
 		rowsNumber = COMPACT_ROWS_NUMBER
 		compactRows = True
+
+	ShapedMatrixClass = shape.value
+	matrix = ShapedMatrixClass(rowsNumber, colsNumber, lastRowSymbol, lastColSymbol, elementName, generic)
 	
 	if shape == MatrixShape.custom:
 		if not compactRows and not compactCols:
 			import tui
-			shape.setCustomElementsList(tui.startInteractiveScreen(rowsNumber, colsNumber))
+			matrix.setCustomElementsList(tui.startInteractiveScreen(rowsNumber, colsNumber))
 		else:
 			raise ValueError("Unknown matrix dimensions")
 
-	matrix = Matrix(rowsNumber, colsNumber, lastRowSymbol, lastColSymbol, elementName, generic, shape)
-	
 	buf = "\\begin{pmatrix} "
 
 	for row in matrix.rows(compactRows, compactCols):
