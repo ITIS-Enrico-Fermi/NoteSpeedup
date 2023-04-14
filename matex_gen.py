@@ -11,19 +11,16 @@ ROW_SEP = "\\\\"
 class MatrixShape(Enum):
 	full, eye, diag, triu, tril, custom = range(6)
 
-	def __new__(cls, value):
-		obj = object.__new__(cls)
-		obj._value_ = value
+class Matrix():
 
-		obj.element = ""
-		obj.generic = False
-		obj.counter = 0
-		obj.rows = 0
-		obj.cols = 0
-		obj.lastRow = ""
-		obj.lastCol = ""
-
-		return obj
+	def __init__(self, rows: int, cols: int, lastRow: str, lastCol: str, element: str, generic: bool, shape: MatrixShape):
+		self.rows = rows
+		self.cols = cols
+		self.lastRow = lastRow
+		self.lastCol = lastCol
+		self.element = element
+		self.generic = generic
+		self.shape = shape
 
 	def setCustomElementsList(self, elementsList: List[str]) -> None:
 		self.customElementsList = elementsList
@@ -64,14 +61,7 @@ class MatrixShape(Enum):
 	def customMatrixElement(self, i: int, j: int) -> str:
 		return self.customElementsList[(i-1) * self.cols + (j-1)]
 
-	def getElements(self, rows: int, cols: int, lastRow: str, lastCol: str, element: str, generic: bool) -> (int, int, str):
-		self.rows = rows
-		self.cols = cols
-		self.lastRow = lastRow
-		self.lastCol = lastCol
-		self.element = element
-		self.generic = generic
-		
+	def elements(self) -> (int, int, str):
 		for i in range(1, rows+1):
 			for j in range(1, cols+1):
 				self.counter += 1
@@ -120,7 +110,9 @@ def main(rowsNumber: str, colsNumber: str, elementName: str, generic: bool, comp
 		else:
 			raise ValueError("Unknown matrix dimensions")
 
-	for i, j, e in shape.getElements(rowsNumber, colsNumber, lastRowSymbol, lastColSymbol, elementName, generic):
+	matrix = Matrix(rowsNumber, colsNumber, lastRow, lastCol, element, generic, shape)
+
+	for i, j, e in matrix.elements():
 		if compactRows and 3 <= i <= rowsNumber - 1:
 			if i != 3 or any(s in e for s in [ROW_SEP, COL_SEP, " "]): continue
 
