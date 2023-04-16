@@ -17,8 +17,8 @@ class Matrix():
 	def __init__(self, rows: int, cols: int, lastRow: str, lastCol: str, element: str, generic: bool):
 		self.rowsNumber = rows
 		self.colsNumber = cols
-		self.lastRow = lastRow	# < symbol of the last row if row dimension is generic (for example m), empty string otherwise
-		self.lastCol = lastCol	# < symbol of the last column if column dimension is generic (for example n), empty string otherwise
+		self.lastRow = lastRow	# < symbolic index of the last row if row dimension is generic (for example m), empty string otherwise
+		self.lastCol = lastCol	# < symbolic index of the last column if column dimension is generic (for example n), empty string otherwise
 		self.element = element
 		self.generic = generic
 
@@ -168,8 +168,8 @@ if __name__ == "__main__":
 	
 	parser.add_argument("-s", "--symbol", help="Specify a generic element name or symbol, usually a letter", type=str, default="c", required=False)
 
-	parser.add_argument("-r", "--rows", help="Matrix rows number. Can be a letter.", type=str, default=None, required=True)
-	parser.add_argument("-c", "--columns", help="Matrix columns number. Can be a letter.", type=str, default=None, required=True)
+	parser.add_argument("-r", "--rows", help="Matrix rows number. Can be a letter if representing symbolic index.", type=str, default=None, required=True)
+	parser.add_argument("-c", "--columns", help="Matrix columns number. Can be a letter if representing symbolic index.", type=str, default=None, required=True)
 	
 	matrixShapeSubparser = parser.add_subparsers(title="shapes", dest="shape", help="Define matrix shape", required=True)
 	matrixShapeSubparser.add_parser("full", help="Generate full (complete) matrix")
