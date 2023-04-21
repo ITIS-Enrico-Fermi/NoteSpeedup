@@ -99,6 +99,14 @@ class CustomMatrix(Matrix):
 	def setCustomElementsList(self, elements):
 		self.elements = elements
 
+class ZeroMatrix(Matrix):
+	def elementAt(self, i: int, j: int) -> str:
+		return "0"
+
+class OnesMatrix(Matrix):
+	def elementAt(self, i: int, j: int) -> str:
+		return "1"
+
 
 class MatrixShape(Enum):
 	"""
@@ -109,6 +117,8 @@ class MatrixShape(Enum):
 	To istantiate the class from the enum value, use the .value property.
 	"""
 	full = FullMatrix
+	zeros = ZeroMatrix
+	ones = OnesMatrix
 	eye = EyeMatrix
 	diag = DiagMatrix
 	triu = TriuMatrix
@@ -172,6 +182,8 @@ if __name__ == "__main__":
 	parser.add_argument("-c", "--columns", help="Matrix columns number. Can be a letter if representing symbolic index.", type=str, default=None, required=True)
 	
 	matrixShapeSubparser = parser.add_subparsers(title="shapes", dest="shape", help="Define matrix shape", required=True)
+	matrixShapeSubparser.add_parser("zeros", help="Generate null matrix of specified dimensions")
+	matrixShapeSubparser.add_parser("ones", help="Generate a matrix full of ones")
 	matrixShapeSubparser.add_parser("full", help="Generate full (complete) matrix")
 	matrixShapeSubparser.add_parser("eye", help="Generate identity matrix")
 	matrixShapeSubparser.add_parser("diag", help="Generate diagonal matrix")
