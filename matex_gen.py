@@ -3,6 +3,7 @@
 import argparse
 from math import ceil
 from enum import Enum
+from abc import ABC, abstractmethod
 from typing import *
 
 COL_SEP = " & "
@@ -12,8 +13,7 @@ COMPACT_ROWS_NUMBER = 4		# < number of rows when using compact rows -cr
 COMPACT_COLUMNS_NUMBER = 4	# < number of columns when using compact column -cc
 
 
-class Matrix():
-
+class Matrix(ABC):
 	def __init__(self, rows: int, cols: int, lastRow: str, lastCol: str, element: str, generic: bool, diagShift: int):
 		self.rowsNumber = rows
 		self.colsNumber = cols
@@ -23,12 +23,14 @@ class Matrix():
 		self.generic = generic
 		self.diagShift = diagShift
 
+	@abstractmethod
 	def elementAt(self, i: int, j: int) -> str:
 		"""
 		This method is called by self.rows to retrieve a matrix element at the given indexes.
 		A subclass must override this.
 		"""
-		return ""
+		
+		...
 		
 	def rows(self, compactRows: bool, compactCols: bool):
 		"""
