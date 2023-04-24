@@ -3,6 +3,7 @@
 import argparse
 from math import ceil
 from enum import Enum
+from abc import ABC, abstractmethod
 from typing import *
 
 COL_SEP = " & "
@@ -12,22 +13,24 @@ COMPACT_ROWS_NUMBER = 4		# < number of rows when using compact rows -cr
 COMPACT_COLUMNS_NUMBER = 4	# < number of columns when using compact column -cc
 
 
-class Matrix():
-
-	def __init__(self, rows: int, cols: int, lastRow: str, lastCol: str, element: str, generic: bool):
+class Matrix(ABC):
+	def __init__(self, rows: int, cols: int, lastRow: str, lastCol: str, element: str, generic: bool, diagShift: int):
 		self.rowsNumber = rows
 		self.colsNumber = cols
 		self.lastRow = lastRow	# < symbolic index of the last row if row dimension is generic (for example m), empty string otherwise
 		self.lastCol = lastCol	# < symbolic index of the last column if column dimension is generic (for example n), empty string otherwise
 		self.element = element
 		self.generic = generic
+		self.diagShift = diagShift
 
+	@abstractmethod
 	def elementAt(self, i: int, j: int) -> str:
 		"""
 		This method is called by self.rows to retrieve a matrix element at the given indexes.
 		A subclass must override this.
 		"""
-		return ""
+		
+		...
 		
 	def rows(self, compactRows: bool, compactCols: bool):
 		"""
@@ -74,7 +77,7 @@ class DiagMatrix(Matrix):
 
 class TriuMatrix(Matrix):
 	def elementAt(self, i: int, j: int) -> str:
-		if i > j: return "0"
+		if i + self.diagShift > j: return "0"
 
 		rowIdx: str = self.lastRow if (self.lastRow and i == self.rowsNumber) else str(i)
 		colIdx: str = self.lastCol if (self.lastCol and j == self.colsNumber) else str(j)
@@ -83,7 +86,7 @@ class TriuMatrix(Matrix):
 
 class TrilMatrix(Matrix):
 	def elementAt(self, i: int, j: int) -> str:
-		if i < j: return "0"
+		if i - self.diagShift < j: return "0"
 
 		rowIdx: str = self.lastRow if (self.lastRow and i == self.rowsNumber) else str(i)
 		colIdx: str = self.lastCol if (self.lastCol and j == self.colsNumber) else str(j)
@@ -99,6 +102,14 @@ class CustomMatrix(Matrix):
 	def setCustomElementsList(self, elements):
 		self.elements = elements
 
+class ZeroMatrix(Matrix):
+	def elementAt(self, i: int, j: int) -> str:
+		return "0"
+
+class OnesMatrix(Matrix):
+	def elementAt(self, i: int, j: int) -> str:
+		return "1"
+
 
 class MatrixShape(Enum):
 	"""
@@ -109,6 +120,8 @@ class MatrixShape(Enum):
 	To istantiate the class from the enum value, use the .value property.
 	"""
 	full = FullMatrix
+	zeros = ZeroMatrix
+	ones = OnesMatrix
 	eye = EyeMatrix
 	diag = DiagMatrix
 	triu = TriuMatrix
@@ -116,7 +129,17 @@ class MatrixShape(Enum):
 	custom = CustomMatrix
 
 
-def main(rowsNumber: str, colsNumber: str, elementName: str, generic: bool, compactRows: bool, compactCols: bool, shape: MatrixShape):
+def main(
+	rowsNumber: str,
+	colsNumber: str,
+	elementName: str,
+	generic: bool,
+	compactRows: bool,
+	compactCols: bool,
+	diagShift: int,
+	shape: MatrixShape
+	):
+
 	lastRowSymbol = ""
 	lastColSymbol = ""
 
@@ -135,7 +158,7 @@ def main(rowsNumber: str, colsNumber: str, elementName: str, generic: bool, comp
 		compactRows = True
 
 	ShapedMatrixClass = shape.value
-	matrix = ShapedMatrixClass(rowsNumber, colsNumber, lastRowSymbol, lastColSymbol, elementName, generic)
+	matrix = ShapedMatrixClass(rowsNumber, colsNumber, lastRowSymbol, lastColSymbol, elementName, generic, diagShift)
 	
 	if shape == MatrixShape.custom:
 		if not compactRows and not compactCols:
@@ -172,12 +195,28 @@ if __name__ == "__main__":
 	parser.add_argument("-c", "--columns", help="Matrix columns number. Can be a letter if representing symbolic index.", type=str, default=None, required=True)
 	
 	matrixShapeSubparser = parser.add_subparsers(title="shapes", dest="shape", help="Define matrix shape", required=True)
+	matrixShapeSubparser.add_parser("zeros", help="Generate null matrix of specified dimensions")
+	matrixShapeSubparser.add_parser("ones", help="Generate a matrix full of ones")
 	matrixShapeSubparser.add_parser("full", help="Generate full (complete) matrix")
 	matrixShapeSubparser.add_parser("eye", help="Generate identity matrix")
 	matrixShapeSubparser.add_parser("diag", help="Generate diagonal matrix")
-	matrixShapeSubparser.add_parser("triu", help="Generate upper triangular matrix")
-	matrixShapeSubparser.add_parser("tril", help="Generate lower triangular matrix")	
+	triuParser = matrixShapeSubparser.add_parser("triu", help="Generate upper triangular matrix")
+	trilParser = matrixShapeSubparser.add_parser("tril", help="Generate lower triangular matrix")	
 	matrixShapeSubparser.add_parser("custom", help="Interactive screen to fill in the matrix your own way")	
 
+	triuParser.add_argument("-d", "--diagonal-shift",
+	help="Shift main diagonal to the d-th diagonal of the matrix."
+	"Can be either a positive (shift diagonal towards the zeros) or a negative integer (shift towards the scalars).", type=int, default=0)
+
+	trilParser.add_argument("-d", "--diagonal-shift",
+	help="Shift main diagonal to the d-th diagonal of the matrix."
+	"Can be either a positive (shift diagonal towards the zeros) or a negative integer (shift towards the scalars).", type=int, default=0)
+
 	args = parser.parse_args()
-	main(args.rows, args.columns, args.symbol, args.generic, args.compact_rows, args.compact_cols, MatrixShape[args.shape])
+
+	try:
+		args.diagonal_shift
+	except AttributeError as e:
+		args.diagonal_shift = 0
+
+	main(args.rows, args.columns, args.symbol, args.generic, args.compact_rows, args.compact_cols, args.diagonal_shift or 0, MatrixShape[args.shape])
