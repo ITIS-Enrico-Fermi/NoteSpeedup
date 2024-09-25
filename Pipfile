@@ -1,0 +1,15 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+clipboard = "==0.0.4"
+pyperclip = "==1.8.2"
+urwid = "==2.1.2"
+requests = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.12"
